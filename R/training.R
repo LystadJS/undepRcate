@@ -26,6 +26,17 @@ rep_token <- function(s) {
   paste(s$id, s$position, s$seed, sep = "-")
 }
 
+has_typing_guide <- function(s) {
+  identical(s$mode, "Guided") && s$lesson_pending == 0L &&
+    s$position %in% 1:2 && s$passed == 0L
+}
+
+editor_message <- function(s, ex) {
+  list(token = rep_token(s), value = if (is.null(s)) "" else s$draft,
+       passed = !is.null(s) && s$passed == 1L,
+       guide = if (has_typing_guide(s)) ex$solution else "")
+}
+
 mids_preview <- function(value, name, table_view) {
   div(class = "fixture", h3(code(name), tags$small("mice mids object")),
     p(sprintf("%d imputations, %d completed iterations. The table shows the original incomplete data.",

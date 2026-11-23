@@ -264,7 +264,8 @@ analytics_server <- function(input, output, session, con, catalog, refresh, open
       tags$details(style = "border-bottom:1px solid #373f41;padding:.55rem 0",
         tags$summary(tags$strong(status), " \u00b7 ", title_for(row$template_id), " \u00b7 ", stamp),
         tags$small(class = "muted", paste0(row$mode, " \u00b7 Rep ", row$position, " \u00b7 ",
-                                           metric_seconds(row$seconds), " \u00b7 Hints used: ", row$hints)),
+                                           metric_seconds(row$seconds), " \u00b7 Hints used: ", row$hints,
+                                           if (isTRUE(row$guide_shown == 1L)) " \u00b7 Typing guide shown")),
         tags$pre(tags$code(row$code)))
     }))
   })

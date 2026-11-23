@@ -2,7 +2,7 @@
 # modes and difficulty changes; only its first graded encounter can earn credit.
 mastery_checkpoint <- function(con, session_id, template_id) {
   attempts <- DBI::dbGetQuery(con, "
-    SELECT a.status, a.hints,
+    SELECT a.status, a.hints, a.guide_shown,
            NOT EXISTS (SELECT 1 FROM attempts AS prior
                        WHERE prior.template_id=a.template_id AND prior.seed=a.seed
                          AND prior.id<a.id AND prior.status!='infrastructure_error') AS unseen
@@ -13,7 +13,7 @@ mastery_checkpoint <- function(con, session_id, template_id) {
   current <- 0L
   best <- 0L
   for (i in seq_len(nrow(attempts))) {
-    if (attempts$status[i] != "pass" || attempts$hints[i] > 0L) {
+    if (attempts$status[i] != "pass" || attempts$hints[i] > 0L || attempts$guide_shown[i] == 1L) {
       current <- 0L
     } else if (attempts$unseen[i] == 1L) {
       current <- current + 1L

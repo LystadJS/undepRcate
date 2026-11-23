@@ -1,7 +1,7 @@
 practice_modes <- c("Recall", "Guided", "Speed", "Mastery")
 mode_notes <- c(
   Recall = "Start with an empty editor and write the operation from memory.",
-  Guided = "Study a worked example, then practice on fresh inputs in sequential order.",
+  Guided = "Study a worked example, type over the answer for two repetitions, then practice from memory.",
   Speed = "Race your target time on each repetition, then check speed alongside accuracy.",
   Mastery = "Build a streak of unaided first passes on new variations. Later reviews test retention."
 )
@@ -47,6 +47,9 @@ undepRcate_ui <- function() {
               div(class = "section-head",
                   h2("Workspace"), radioButtons("source_mode", NULL, c("In-app", "Positron"), inline = TRUE)),
               conditionalPanel("input.source_mode !== 'Positron'",
+                div(id = "typing-guide-help", hidden = NA,
+                  p(id = "typing-guide-note", "Type over the faint answer. The guide ends after repetition 2."),
+                  pre(id = "typing-guide-reference", class = "visually-hidden")),
                 shinyAce::aceEditor("code", value = "", mode = "r", theme = "tomorrow_night",
                     height = "248px", fontSize = 15, tabSize = 2, showPrintMargin = FALSE,
                     autoComplete = "disabled", debounce = 200, wordWrap = TRUE)),
