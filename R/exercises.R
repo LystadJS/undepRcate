@@ -52,11 +52,11 @@ exercise_frame <- function(ctx, variant) {
 
 exercise_plan <- function(instructions, solution, concept, technique, partial,
                           explanation, contract = list(kind = "value"),
-                          fixture = exercise_frame) {
+                          fixture = exercise_frame, lesson = NULL) {
   list(
     instructions = instructions, solution = solution,
     hints = c(concept, technique, partial, paste(solution, explanation, sep = "\n\n")),
-    explanation = explanation, contract = contract, fixture = fixture
+    explanation = explanation, contract = contract, fixture = fixture, lesson = lesson
   )
 }
 
@@ -66,23 +66,31 @@ exercise_table <- function(ordered = FALSE, column_order = FALSE, storage = NULL
   contract
 }
 
-make_exercise <- function(id, seed, level = 1L) {
+make_exercise <- function(id, seed, level = 1L, preview_only = FALSE, task_seed = seed) {
   template <- exercise_templates()[[id]]
   if (is.null(template)) stop("Unknown exercise ID: ", id)
-  if (length(seed) != 1L || !is.numeric(seed) || !is.finite(seed) ||
-      seed != trunc(seed) || seed < 0 || seed > .Machine$integer.max) {
-    stop("Seed must be a nonnegative R integer.")
+  for (value in list(seed, task_seed)) {
+    if (length(value) != 1L || !is.numeric(value) || !is.finite(value) ||
+        value != trunc(value) || value < 0 || value > .Machine$integer.max) {
+      stop("Seed must be a nonnegative R integer.")
+    }
   }
   if (length(level) != 1L || !level %in% 1:3) stop("Level must be 1, 2 or 3.")
   seed <- as.integer(seed)
   level <- as.integer(level)
   withr::with_seed(seed, {
     ctx <- exercise_context()
-    spec <- template$build(ctx, level)
-    fixtures <- lapply(seq_len(3L), function(i) spec$fixture(ctx, i))
-    c(list(id = id, category = template$category, seed = seed, level = level,
+    # A worked example can use its own columns and records while teaching the
+    # same task variant (for example, a grouped median) as the first repetition.
+    spec <- if (task_seed == seed) template$build(ctx, level) else
+      withr::with_seed(task_seed, {
+        exercise_context()
+        template$build(ctx, level)
+      })
+    fixtures <- lapply(if (preview_only) 1L else seq_len(3L), function(i) spec$fixture(ctx, i))
+    c(list(id = id, category = template$category, seed = seed, level = level, context = ctx,
            inputs = fixtures[[1L]], fixtures = fixtures),
-      spec[c("instructions", "solution", "hints", "explanation", "contract")])
+      spec[c("instructions", "solution", "hints", "explanation", "contract", "lesson")])
   })
 }
 

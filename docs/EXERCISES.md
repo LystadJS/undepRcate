@@ -41,6 +41,12 @@ exercise_library_text <- function() {
 
 `make_exercise()` calls the builder once and its fixture generator three times within a saved random seed. Each fixture returns a **named list** of independent R inputs in the same schema. The first appears in the preview. The other two run the same submission on different data. Put missing values, repeated keys, boundary inputs or empty groups where they distinguish a correct operation from an accidental match. Use the supplied random state throughout. An unchanged template, seed and level regenerate the same exercise when a session resumes.
 
+### Teach the drill in Guided mode
+
+Guided builds a separate example at the learner's current level and executes its reference answer on its own displayed input. A scalar or table appears as output, a plotting exercise displays the plot, and a function exercise shows calls and return values. The practice grader still uses three fixtures.
+
+Use the optional `lesson` argument of `exercise_plan()` to supply `guided_notes(intuition, steps, math, symbols)`. Write a short concept review and a character vector of steps that explain how to get from the example inputs to the answer. Supply a readable formula and a list of symbol rows. Each row has five strings giving the symbol, its meaning and R equivalent, dimensions, status, and conditioning. The built-in lessons in `R/guided-core.R` and `R/guided-missing.R` also compute example-specific explanations from the displayed values. An extension that omits teaching notes uses its concept, technique, explanation and actual worked result.
+
 ### How the answer is checked
 
 The last expression in the submission supplies its answer. Assignments also return their value in R. Each fixture gets fresh bindings and the worker makes `dplyr`, `tidyr`, `purrr` and `ggplot2` available. Numerical comparisons use a tolerance of `1e-7`.

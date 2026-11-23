@@ -1,7 +1,7 @@
 practice_modes <- c("Recall", "Guided", "Speed", "Mastery")
 mode_notes <- c(
   Recall = "Start with an empty editor and write the operation from memory.",
-  Guided = "Start with a conceptual hint. Reveal the technique, a partial example, or the worked answer as needed.",
+  Guided = "Study a worked example, then practice on fresh inputs in sequential order.",
   Speed = "Race your target time on each repetition, then check speed alongside accuracy.",
   Mastery = "Build a streak of unaided first passes on new variations. Later reviews test retention."
 )
@@ -33,11 +33,13 @@ undepRcate_ui <- function() {
                 textOutput("mode_note", inline = TRUE)),
             div(class = "form-pair",
               selectInput("target", "Repetitions", c("5","10","20","50","100","Unlimited"="0"), "20"),
-              selectInput("ordering", "Variation order", c("Sequential", "Randomized"))),
+              selectInput("ordering", "Variation order", c("Sequential", "Randomized"), selectize = FALSE)),
             div(class = "panel-foot", actionButton("start", "Start session  \u2192", class = "btn-primary"))),
           home_insights_ui()))),
       conditionalPanel("output.active === true", div(class = "shell active-shell",
         uiOutput("session_heading"),
+        conditionalPanel("output.lesson_pending === true", uiOutput("guided_lesson")),
+        conditionalPanel("output.lesson_pending === false",
         div(class = "work-grid",
           div(class = "work-main",
             div(class = "panel-card task-card", h2("Task"), uiOutput("prompt")),
@@ -60,7 +62,7 @@ undepRcate_ui <- function() {
             div(class = "panel-card", h2("Inputs"), uiOutput("preview")),
             div(class = "panel-card", h2("Hints"), uiOutput("hint_text"),
                 actionButton("hint", "Reveal next hint", class = "hint-button")),
-            div(class = "panel-card", h2("Skill progress"), uiOutput("skill_status")))),
+            div(class = "panel-card", h2("Skill progress"), uiOutput("skill_status"))))),
         actionButton("end", "End session", class = "end-session")))),
     tabPanel("Progress", div(class = "shell", analytics_ui(catalog))),
     tabPanel("Settings", div(class = "shell settings",

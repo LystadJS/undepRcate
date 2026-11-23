@@ -10,7 +10,7 @@ db_open <- function(path) {
   DBI::dbGetQuery(con, "PRAGMA journal_mode = WAL")
   DBI::dbWithTransaction(con, {
     version <- DBI::dbGetQuery(con, "PRAGMA user_version")[[1L]]
-    if (version > 2L) stop("This progress database needs a newer version of undepRcate.")
+    if (version > 3L) stop("This progress database needs a newer version of undepRcate.")
     if (version == 0L) {
       DBI::dbExecute(con, "CREATE TABLE sessions (
         id INTEGER PRIMARY KEY, focus TEXT NOT NULL, mode TEXT NOT NULL,
@@ -43,6 +43,15 @@ db_open <- function(path) {
                            WHERE status!='infrastructure_error'")
       DBI::dbExecute(con, "PRAGMA user_version = 2")
     }
+    if (version < 3L) {
+      # Every pre-migration Guided session was already in practice.
+      DBI::dbExecute(con, "ALTER TABLE sessions ADD COLUMN lesson_pending INTEGER NOT NULL DEFAULT 0
+        CHECK(lesson_pending IN (0,1) AND (lesson_pending=0 OR
+          (mode='Guided' AND ordering='Sequential' AND position=1 AND passed=0 AND hints=0 AND draft='')))")
+      DBI::dbExecute(con, "UPDATE sessions SET ordering='Sequential', revision=revision+1
+                           WHERE mode='Guided' AND state='active'")
+      DBI::dbExecute(con, "PRAGMA user_version = 3")
+    }
   })
   ok <- TRUE
   con
@@ -57,24 +66,64 @@ active_session <- function(con) {
 
 start_session <- function(con, focus, mode, ordering, target, template_id, seed,
                           level = 1L, now = Sys.time()) {
+  guided <- identical(mode, "Guided")
+  if (guided) ordering <- "Sequential"
   DBI::dbWithTransaction(con, {
     if (!is.null(active_session(con))) stop("Finish or end the current practice session first.")
     DBI::dbExecute(con, "INSERT INTO sessions
-      (focus,mode,ordering,target,template_id,hints,seed,level,started_at,item_started_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?)", params = list(focus, mode, ordering, target, template_id, as.integer(mode == "Guided"),
+      (focus,mode,ordering,target,template_id,lesson_pending,seed,level,started_at,item_started_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?)", params = list(focus, mode, ordering, target, template_id, as.integer(guided),
                                                   seed, level, as.numeric(now), as.numeric(now)))
     active_session(con)
   })
 }
 
-update_active <- function(con, s, assignments, values) {
+update_active <- function(con, s, assignments, values, lesson_pending = 0L) {
   sql <- paste("UPDATE sessions SET", assignments,
-               ", revision=revision+1 WHERE id=? AND revision=? AND state='active'")
-  changed <- DBI::dbExecute(con, sql, params = c(values, list(s$id, s$revision)))
+               ", revision=revision+1 WHERE id=? AND revision=? AND state='active' AND lesson_pending=?")
+  changed <- DBI::dbExecute(con, sql, params = c(values, list(s$id, s$revision, lesson_pending)))
   if (changed != 1L) stop("Session changed in another tab. Reload to use the latest version.")
 }
 
+checked_session <- function(con, s) {
+  row <- active_session(con)
+  if (is.null(row) || row$id != s$id || row$revision != s$revision) {
+    stop("Session changed in another tab. Reload to use the latest version.")
+  }
+  row
+}
+
+finish_guided_lesson <- function(con, s, now = as.numeric(Sys.time())) {
+  if (s$mode != "Guided") stop("Only Guided sessions have an introductory lesson.")
+  DBI::dbWithTransaction(con, {
+    if (s$lesson_pending == 1L) {
+      changed <- DBI::dbExecute(con, "UPDATE sessions SET lesson_pending=0, item_started_at=?, revision=revision+1
+        WHERE id=? AND revision=? AND state='active' AND mode='Guided' AND lesson_pending=1",
+        params = list(as.numeric(now), s$id, s$revision))
+      row <- active_session(con)
+      # Replay of the same transition may read its immediate successor. A later
+      # edit, submission or different session must never be adopted by a late click.
+      if (changed == 0L && (is.null(row) || row$id != s$id || row$revision != s$revision + 1L ||
+                            row$lesson_pending != 0L)) {
+        stop("Session changed in another tab. Reload to use the latest version.")
+      }
+      row
+    } else {
+      # A duplicate on the current snapshot must not restart the clock.
+      checked_session(con, s)
+    }
+  })
+}
+
+require_practice <- function(con, s) {
+  if (s$lesson_pending == 1L) {
+    checked_session(con, s)
+    stop("Finish the Guided lesson before practicing.")
+  }
+}
+
 save_draft <- function(con, s, draft, hints = s$hints) {
+  require_practice(con, s)
   if (s$passed == 1L) stop("This repetition has already passed.")
   DBI::dbWithTransaction(con, {
     update_active(con, s, "draft=?, hints=MAX(hints,?)", list(draft, hints))
@@ -84,6 +133,7 @@ save_draft <- function(con, s, draft, hints = s$hints) {
 
 record_attempt <- function(con, s, code, hints, status, seconds, execution_seconds = 0,
                            now = Sys.time()) {
+  require_practice(con, s)
   if (s$passed == 1L) stop("This repetition has already passed.")
   hints <- max(s$hints, hints)
   practice_date <- format(as.POSIXct(now, origin = "1970-01-01"), "%Y-%m-%d", tz = "")
@@ -100,14 +150,15 @@ record_attempt <- function(con, s, code, hints, status, seconds, execution_secon
 
 advance_session <- function(con, s, template_id = s$template_id, seed = s$seed,
                             level = s$level, now = Sys.time()) {
+  require_practice(con, s)
   if (s$passed != 1L) stop("Pass this repetition before advancing.")
   DBI::dbWithTransaction(con, {
     if (s$target > 0L && s$position >= s$target) {
       update_active(con, s, "state='finished', ended_at=?", list(as.numeric(now)))
     } else {
       update_active(con, s,
-        "position=position+1, template_id=?, seed=?, level=?, draft='', hints=?, passed=0, item_started_at=?",
-        list(template_id, seed, level, as.integer(s$mode == "Guided"), as.numeric(now)))
+        "position=position+1, template_id=?, seed=?, level=?, draft='', hints=0, passed=0, item_started_at=?",
+        list(template_id, seed, level, as.numeric(now)))
     }
     active_session(con)
   })
@@ -115,7 +166,7 @@ advance_session <- function(con, s, template_id = s$template_id, seed = s$seed,
 
 end_session <- function(con, s, now = Sys.time()) {
   DBI::dbWithTransaction(con, {
-    update_active(con, s, "state='ended', ended_at=?", list(as.numeric(now)))
+    update_active(con, s, "state='ended', ended_at=?", list(as.numeric(now)), lesson_pending = s$lesson_pending)
     NULL
   })
 }

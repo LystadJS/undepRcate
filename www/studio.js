@@ -31,12 +31,30 @@
     }
   };
   $(function () {
+    const ordering = document.getElementById("ordering");
+    let previousOrder = ordering.value;
+    function updateOrder() {
+      const guided = document.querySelector("input[name='mode']:checked")?.value === "Guided";
+      if (guided === ordering.disabled) return;
+      if (guided) previousOrder = ordering.value;
+      ordering.value = guided ? "Sequential" : previousOrder;
+      ordering.disabled = guided;
+      $(ordering).trigger("change");
+    }
+    $(document).on("change", "input[name='mode']", updateOrder);
+    updateOrder();
+    $(document).on("click", "#finish_lesson", function () {
+      send("finish_lesson", this.dataset.lessonToken);
+    });
+    $(document).on("click", "#retry_example", function () {
+      send("retry_example", this.dataset.lessonToken);
+    });
     Shiny.addCustomMessageHandler("rr-editor", function (message) {
       clearTimeout(timer);
       token = message.token;
       passed = message.passed;
       const ace = editor();
-      ace.setReadOnly(passed);
+      ace.setReadOnly(!token || passed);
       ace.setValue(message.value, -1);
       ace.session.getUndoManager().reset();
       if (synced !== ace) {
