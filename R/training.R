@@ -22,15 +22,19 @@ new_seed <- function(s = NULL) {
 }
 
 rep_token <- function(s) {
-  if (is.null(s)) return("")
+  if (is.null(s) || isTRUE(s$lesson_pending == 1L)) return("")
   paste(s$id, s$position, s$seed, sep = "-")
+}
+
+mids_preview <- function(value, name, table_view) {
+  div(class = "fixture", h3(code(name), tags$small("mice mids object")),
+    p(sprintf("%d imputations, %d completed iterations. The table shows the original incomplete data.",
+              value$m, value$iteration)), table_view(value$data, paste0(name, "$data")))
 }
 
 preview_input <- function(value, name) {
   if (inherits(value, "mids")) {
-    return(div(class = "fixture", h3(code(name), tags$small("mice mids object")),
-      p(sprintf("%d imputations, %d completed iterations. The table shows the original incomplete data.",
-                value$m, value$iteration)), preview_input(value$data, paste0(name, "$data"))))
+    return(mids_preview(value, name, preview_input))
   }
   if (is.data.frame(value)) {
     types <- vapply(value, function(column) paste(class(column), collapse = "/"), "")

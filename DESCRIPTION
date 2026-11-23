@@ -8,5 +8,5 @@ Description: A single-user Shiny practice environment with reproducible R drills
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.3.0)
-Imports: shiny, shinyAce, bslib, dplyr, tidyr, purrr, ggplot2, DBI, RSQLite,
+Imports: shiny, shinyAce, bslib, htmltools, dplyr, tidyr, purrr, ggplot2, DBI, RSQLite,
     callr, processx, testthat, renv, withr, jsonlite, tidyverse, mice

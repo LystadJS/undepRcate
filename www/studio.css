@@ -64,6 +64,26 @@ progress::-webkit-progress-bar { background:#333b3d; } progress::-webkit-progres
 .rep-meter { display:grid; justify-items:end; gap:5px; font:13px var(--mono); color:var(--muted); }
 .rep-meter progress { width:150px; }
 .timer.over,.fail { color:#f0b49c; }
+.lesson-plan { color:var(--muted); font-size:.9rem; text-align:right; }
+.lesson-grid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(0,1fr); gap:16px; align-items:start; }
+.lesson-walkthrough h3,.lesson-answer h3 { margin-top:1.3rem; }
+.lesson-walkthrough ol { padding-left:1.45rem; }
+.lesson-walkthrough li { padding-left:.25rem; margin-bottom:.55rem; }
+.lesson-walkthrough li::marker { color:var(--accent); font-weight:650; }
+.lesson-task { font-size:1.06rem; }
+.lesson-inputs,.lesson-answer,.lesson-notation { min-width:0; }
+.lesson-answer pre code { color:inherit; }
+.lesson-grid details pre,.lesson-answer details pre { white-space:pre; overflow:auto; max-height:24rem; }
+.lesson-answer img { display:block; max-width:min(100%,640px); height:auto; }
+.lesson-formula,.lesson-notation tbody th { font-family:"Cambria Math","Segoe UI Symbol",serif; }
+.lesson-formula { font-size:1.35rem; overflow-wrap:anywhere; }
+.lesson-notation table { width:100%; line-height:1.4; font-size:.9rem; }
+.lesson-notation th,.lesson-notation td { padding:.55rem .75rem; border-bottom:1px solid var(--line); vertical-align:top; }
+.lesson-notation thead { background:var(--inset); }
+.lesson-notation tbody th { font-size:1.08rem; }
+.lesson-next { display:flex; justify-content:flex-end; margin-bottom:12px; }
+#ordering:disabled { color:var(--muted)!important; cursor:not-allowed; }
+@media(max-width:800px) { .lesson-grid { grid-template-columns:1fr; gap:0; } .lesson-notation table { min-width:620px; } }
 .work-grid { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(270px,1fr); gap:16px; }
 .work-main,.work-side,.setup,.form-pair>* { min-width:0; }
 .task-card p { font-size:1.08rem; margin:0; }

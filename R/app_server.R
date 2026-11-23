@@ -22,7 +22,7 @@ undepRcate_server <- function(input, output, session) {
   show_item <- function(s) {
     current(s)
     result(NULL)
-    item(if (is.null(s)) NULL else make_exercise(s$template_id, s$seed, s$level))
+    item(if (is.null(s) || s$lesson_pending == 1L) NULL else make_exercise(s$template_id, s$seed, s$level))
     session$sendCustomMessage("rr-editor", list(token = rep_token(s),
       value = if (is.null(s)) "" else s$draft, passed = !is.null(s) && s$passed == 1L))
   }
@@ -45,6 +45,8 @@ undepRcate_server <- function(input, output, session) {
 
   output$active <- reactive(!is.null(current()))
   outputOptions(output, "active", suspendWhenHidden = FALSE)
+  output$lesson_pending <- reactive(isTRUE(current()$lesson_pending == 1L))
+  outputOptions(output, "lesson_pending", suspendWhenHidden = FALSE)
   output$mode_note <- renderText(mode_notes[[req(input$mode)]])
   observeEvent(input$category, {
     pool <- catalog[catalog$category == input$category, ]
@@ -54,6 +56,7 @@ undepRcate_server <- function(input, output, session) {
   })
 
   begin <- function(focus, mode, ordering, target) {
+    if (identical(mode, "Guided")) ordering <- "Sequential"
     req(is.null(current()), mode %in% practice_modes, ordering %in% c("Sequential", "Randomized"),
         target %in% c(0L, 5L, 10L, 20L, 50L, 100L))
     p <- progress_snapshot()
@@ -75,6 +78,12 @@ undepRcate_server <- function(input, output, session) {
   output$session_heading <- renderUI({
     s <- req(current())
     refresh()
+    if (s$lesson_pending == 1L) {
+      description <- if (s$target == 0L) "Unlimited sequential practice" else
+        sprintf("%d sequential repetitions", s$target)
+      return(div(class = "session-top", div(span(class = "eyebrow", "Guided lesson"), h1(title_for(s$template_id))),
+        span(class = "lesson-plan", description, " after the lesson")))
+    }
     target <- if (s$target == 0L) "Unlimited" else s$target
     tagList(div(class = "session-top",
       div(span(class = "eyebrow", paste(s$mode, "practice")), h1(title_for(s$template_id))),
@@ -85,6 +94,31 @@ undepRcate_server <- function(input, output, session) {
                `data-stopped` = if (s$passed) "1" else "0",
                `data-target` = if (s$mode == "Speed") goal_time() else 0, "\u2014"))))
   })
+  example_retry <- reactiveVal(0L)
+  lesson_input <- reactive({
+    s <- req(current())
+    req(s$lesson_pending == 1L)
+    guided_example(s)
+  })
+  worked <- reactive({
+    ex <- lesson_input()
+    example_retry()
+    list(ex = ex, answer = tryCatch(run_worked_example(ex), error = identity))
+  })
+  observeEvent(input$retry_example, {
+    s <- req(current())
+    req(s$lesson_pending == 1L, identical(input$retry_example, lesson_token(s)))
+    example_retry(example_retry() + 1L)
+  })
+  output$guided_lesson <- renderUI({
+    example <- worked()
+    guided_lesson_ui(example$ex, example$answer, current())
+  })
+  observeEvent(input$finish_lesson, protect({
+    s <- req(current())
+    req(s$lesson_pending == 1L, identical(input$finish_lesson, lesson_token(s)))
+    show_item(finish_guided_lesson(con, s))
+  }))
   output$prompt <- renderUI(p(req(item())$instructions))
   output$preview <- renderUI({
     inputs <- req(item())$inputs
@@ -122,27 +156,25 @@ undepRcate_server <- function(input, output, session) {
   output$hint_text <- renderUI({
     s <- req(current())
     ex <- req(item())
-    if (s$hints == 0L) return(p(class = "muted", if (s$mode == "Guided")
-      "Start with a concept, then reveal the function, a partial example, and the worked answer."
-      else "Reveal a hint if you need one. Hints are recorded for this repetition."))
+    if (s$hints == 0L) return(p(class = "muted", "Reveal a hint if you need one. Hints are recorded for this repetition."))
     tagList(lapply(seq_len(s$hints), function(i) div(class = "revealed",
       if (i == 4L) span(`data-last-hint` = "true"), strong(c("Concept", "Technique", "Partial example", "Worked answer")[i]), pre(ex$hints[i]))))
   })
   observeEvent(input$hint, protect({
     s <- req(current())
-    req(s$hints < 4L, !s$passed)
+    req(s$lesson_pending == 0L, s$hints < 4L, !s$passed)
     current(save_draft(con, s, s$draft, s$hints + 1L))
   }))
   observeEvent(input$draft_event, protect({
     s <- req(current())
     payload <- input$draft_event
-    req(identical(payload$token, rep_token(s)), !s$passed, !identical(s$draft, payload$code))
+    req(s$lesson_pending == 0L, identical(payload$token, rep_token(s)), !s$passed, !identical(s$draft, payload$code))
     current(save_draft(con, s, payload$code))
   }))
   observeEvent(input$submission, protect({
     s <- req(current())
     payload <- input$submission
-    req(identical(payload$token, rep_token(s)), !s$passed)
+    req(s$lesson_pending == 0L, identical(payload$token, rep_token(s)), !s$passed)
     code <- if (identical(payload$source, "Positron")) read_practice_file(s) else payload$code
     if (!nzchar(trimws(code))) {
       showNotification("Write an answer and submit it to run the tests.")
