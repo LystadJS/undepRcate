@@ -10,7 +10,7 @@ db_open <- function(path) {
   DBI::dbGetQuery(con, "PRAGMA journal_mode = WAL")
   DBI::dbWithTransaction(con, {
     version <- DBI::dbGetQuery(con, "PRAGMA user_version")[[1L]]
-    if (version > 3L) stop("This progress database needs a newer version of undepRcate.")
+    if (version > 4L) stop("This progress database needs a newer version of undepRcate.")
     if (version == 0L) {
       DBI::dbExecute(con, "CREATE TABLE sessions (
         id INTEGER PRIMARY KEY, focus TEXT NOT NULL, mode TEXT NOT NULL,
@@ -51,6 +51,12 @@ db_open <- function(path) {
       DBI::dbExecute(con, "UPDATE sessions SET ordering='Sequential', revision=revision+1
                            WHERE mode='Guided' AND state='active'")
       DBI::dbExecute(con, "PRAGMA user_version = 3")
+    }
+    if (version < 4L) {
+      # Attempts recorded before the typing guide existed retain their original credit.
+      DBI::dbExecute(con, "ALTER TABLE attempts ADD COLUMN guide_shown INTEGER NOT NULL DEFAULT 0
+        CHECK(guide_shown IN (0,1))")
+      DBI::dbExecute(con, "PRAGMA user_version = 4")
     }
   })
   ok <- TRUE
@@ -132,7 +138,7 @@ save_draft <- function(con, s, draft, hints = s$hints) {
 }
 
 record_attempt <- function(con, s, code, hints, status, seconds, execution_seconds = 0,
-                           now = Sys.time()) {
+                           now = Sys.time(), guide_shown = FALSE) {
   require_practice(con, s)
   if (s$passed == 1L) stop("This repetition has already passed.")
   hints <- max(s$hints, hints)
@@ -140,10 +146,10 @@ record_attempt <- function(con, s, code, hints, status, seconds, execution_secon
   DBI::dbWithTransaction(con, {
     update_active(con, s, "draft=?, hints=?, passed=?", list(code, hints, as.integer(status == "pass")))
     DBI::dbExecute(con, "INSERT INTO attempts
-        (session_id,position,template_id,seed,level,code,hints,status,seconds,execution_seconds,attempted_at,practice_date)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        (session_id,position,template_id,seed,level,code,hints,status,seconds,execution_seconds,attempted_at,practice_date,guide_shown)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
       params = list(s$id, s$position, s$template_id, s$seed, s$level, code, hints, status,
-                    seconds, execution_seconds, as.numeric(now), practice_date))
+                    seconds, execution_seconds, as.numeric(now), practice_date, guide_shown))
     active_session(con)
   })
 }
@@ -174,7 +180,7 @@ end_session <- function(con, s, now = Sys.time()) {
 attempt_history <- function(con, include_code = TRUE) {
   fields <- c("id", "session_id", "position", "template_id", "seed", "level",
               if (include_code) "code", "hints", "status", "seconds", "execution_seconds",
-              "attempted_at", "practice_date")
+              "attempted_at", "practice_date", "guide_shown")
   sql <- paste("SELECT", paste(paste0("attempts.", fields), collapse = ","),
                ", sessions.mode, sessions.focus FROM attempts JOIN sessions",
                "ON sessions.id=attempts.session_id ORDER BY attempted_at, attempts.id")

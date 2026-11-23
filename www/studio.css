@@ -96,6 +96,11 @@ progress::-webkit-progress-bar { background:#333b3d; } progress::-webkit-progres
 .editor-actions { justify-content:flex-start; flex-wrap:wrap; padding:14px; border-top:1px solid var(--line); }
 .editor-actions .action-button { margin-left:auto; }
 .ace_editor { border:0!important; border-radius:0!important; font-family:var(--mono)!important; }
+#typing-guide-help { padding:8px 19px; color:var(--muted); font-size:.83rem; border-bottom:1px solid var(--line); }
+#typing-guide-note { margin:0; }
+#typing-guide-help[hidden],.trace-layer[hidden] { display:none; }
+.trace-layer { position:absolute; inset:0; z-index:1; pointer-events:none; user-select:none; font:inherit; }
+.trace-fragment { position:absolute; white-space:pre; color:#8a939a; font:inherit; pointer-events:none; user-select:none; }
 kbd { font-size:.68rem; padding:3px; color:inherit; background:#0002; vertical-align:middle; }
 .fixture h3 { display:flex; justify-content:space-between; gap:8px; align-items:center; margin:4px 0 10px; }
 .fixture+.fixture { margin-top:18px; }

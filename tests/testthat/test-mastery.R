@@ -1,8 +1,9 @@
 testthat::test_that("mastery checkpoints count first-pass independent variations in one drill and session", {
   con <- db_open(":memory:")
   withr::defer(db_close(con))
-  prior <- start_session(con, "summary", "Recall", "Sequential", 1L, "summary", 10L)
-  prior <- record_attempt(con, prior, "a", 0, "pass", 1)
+  prior <- start_session(con, "summary", "Guided", "Sequential", 1L, "summary", 10L)
+  prior <- finish_guided_lesson(con, prior)
+  prior <- record_attempt(con, prior, "a", 0, "pass", 1, guide_shown = TRUE)
   advance_session(con, prior)
   testthat::expect_equal(mastery_checkpoint(con, prior$id, "summary"), list(current = 0L, best = 0L))
   s <- start_session(con, "summary", "Mastery", "Sequential", 0L, "summary", 11L)

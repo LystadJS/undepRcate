@@ -22,9 +22,9 @@ undepRcate_server <- function(input, output, session) {
   show_item <- function(s) {
     current(s)
     result(NULL)
-    item(if (is.null(s) || s$lesson_pending == 1L) NULL else make_exercise(s$template_id, s$seed, s$level))
-    session$sendCustomMessage("rr-editor", list(token = rep_token(s),
-      value = if (is.null(s)) "" else s$draft, passed = !is.null(s) && s$passed == 1L))
+    ex <- if (!is.null(s) && s$lesson_pending == 0L) make_exercise(s$template_id, s$seed, s$level)
+    item(ex)
+    session$sendCustomMessage("rr-editor", editor_message(s, ex))
   }
   restore <- function() show_item(active_session(con))
   set_completion <- function(disabled) {
@@ -126,13 +126,16 @@ undepRcate_server <- function(input, output, session) {
   })
   output$file_info <- renderUI({
     ex <- req(item())
-    s <- isolate(current())
+    s <- req(current())
     path <- prepare_files(s, ex)
     div(class = "file-instructions",
       p("From the project terminal, open this repetition in Positron."),
       pre(paste0('positron -r "', gsub("\\\\", "/", path), '"')),
       p("Load the inputs from the project R console."),
       pre(sprintf('source("%s")', file.path(dirname(path), "context.R"))),
+      if (has_typing_guide(s)) tagList(
+        p("Use this typing guide while writing your answer in Positron."),
+        pre(code(ex$solution), .noWS = "inside")),
       p("Edit and save answer.R, then select Check answer here."),
       tags$small("Use the final expression in answer.R to return your answer."))
   })
@@ -183,13 +186,13 @@ undepRcate_server <- function(input, output, session) {
     seconds <- max(0, as.numeric(Sys.time()) - s$item_started_at)
     result_value <- withProgress(message = "Checking R code", detail = "Running preview and hidden fixtures",
                                  value = 0.5, assess_answer(item(), code))
-    updated <- record_attempt(con, s, code, s$hints, result_value$status, seconds, result_value$elapsed)
+    updated <- record_attempt(con, s, code, s$hints, result_value$status, seconds, result_value$elapsed,
+                              guide_shown = has_typing_guide(s))
     current(updated)
     result(list(review = result_value, seconds = seconds, hints = s$hints))
     bump()
     if (identical(payload$source, "Positron")) {
-      session$sendCustomMessage("rr-editor", list(token = rep_token(updated),
-        value = code, passed = updated$passed == 1L))
+      session$sendCustomMessage("rr-editor", editor_message(updated, item()))
     } else if (updated$passed) session$sendCustomMessage("rr-passed", rep_token(updated))
   }))
   output$feedback <- renderUI({

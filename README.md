@@ -40,11 +40,11 @@ The range is 5, 10, 20, 50, 100, or unlimited. A single drill stays on the same 
 | Mode | Practice behavior |
 | --- | --- |
 | Recall | Starts with an empty editor. In-app keyword suggestions are disabled by default and can be toggled in Settings. |
-| Guided | Locks the order to Sequential. Study the worked example, its R answer and output, and the notation behind each step. Select **Finish lesson and start practice** to open repetition 1 on fresh inputs with a blank editor. |
+| Guided | Locks the order to Sequential. Study the worked example, then select **Finish lesson and start practice**. In repetitions 1 and 2, type over the faint answer for the current inputs. From repetition 3, write the answer from memory. |
 | Speed | Counts down to your configurable per-repetition target. You can finish after the target expires and see the overrun alongside correctness. |
 | Mastery | Tracks a three-pass checkpoint within the session for each drill. New, unaided first passes build the streak. A miss or hint resets it. The long-term skill rating also requires later reviews. |
 
-Guided provides one opening lesson per set. In a mixed set it teaches the first scheduled drill. Reopening the app returns you to the lesson or the repetition you reached. Timing begins when you start practice, and your full repetition target is still available. Hints remain available during practice.
+Guided provides one opening lesson per set. In a mixed set it teaches the first scheduled drill, and the typing guide covers the first two repetitions of the set. Reopening the app restores your lesson or draft. Only the code you enter is saved and graded. In Positron mode the browser shows the reference beside the file instructions, and you type your answer in `answer.R`. The two guided repetitions count toward your practice total. Independent mastery credit begins with an unaided pass on a fresh variation. Hints remain available throughout practice.
 
 The library has 62 drills across nine categories. **Missing Data** includes 32 drills in six stages, from finding missing or structurally inapplicable records to validating imputations, pooling model estimates, and reporting sensitivity to assumptions. Select the category and start with **Import records without losing missing codes**, or choose an individual drill directly. [Missing Data learning path and software notation](docs/MISSING-DATA.md)
 

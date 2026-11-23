@@ -12,7 +12,9 @@ schedule_skill <- function(history, now = Sys.time()) {
   history <- history[order(history$attempted_at, history$id), , drop = FALSE]
   passed <- history$status == "pass"
   first <- !duplicated(history[c("template_id", "seed")])
-  clean <- passed & first & history$hints == 0L
+  assisted <- history$hints > 0L
+  if (!is.null(history$guide_shown)) assisted <- assisted | history$guide_shown == 1L
+  clean <- passed & first & !assisted
   intervals <- c(1L, 3L, 7L, 14L, 30L, 60L)
   step <- 1L
   streak <- 0L
@@ -41,7 +43,7 @@ schedule_skill <- function(history, now = Sys.time()) {
       last_clean_day <- day
     } else {
       # Familiar or assisted work earns no first-encounter or retention credit.
-      if (history$hints[i] > 0L) streak <- 0L
+      if (assisted[i]) streak <- 0L
       if (is.na(due)) due <- stamp + 600
     }
   }
@@ -73,7 +75,7 @@ review_priority <- function(due, recent_error_rate, now) {
 
 skill_progress <- function(con, now = Sys.time(), history = NULL) {
   if (is.null(history)) {
-    history <- DBI::dbGetQuery(con, "SELECT id,template_id,seed,hints,status,attempted_at,practice_date
+    history <- DBI::dbGetQuery(con, "SELECT id,template_id,seed,hints,guide_shown,status,attempted_at,practice_date
                                       FROM attempts WHERE status!='infrastructure_error'")
   }
   rows <- lapply(split(history, history$template_id), schedule_skill, now = now)
