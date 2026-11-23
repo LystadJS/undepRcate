@@ -6,12 +6,12 @@ mode_notes <- c(
   Mastery = "Build a streak of unaided first passes on new variations. Later reviews test retention."
 )
 
-rreps_ui <- function() {
+undepRcate_ui <- function() {
   catalog <- exercise_catalog()
   categories <- sort(unique(catalog$category))
   default_category <- catalog$category[match("grouped_summary", catalog$id)]
-  brand <- span(class = "brand", span(class = "brand-mark", "R", span("/")), "RReps")
-  navbarPage(brand, id = "tab", windowTitle = "RReps",
+  brand <- span(class = "brand", span(class = "brand-mark", "R", span("/")), "undepRcate")
+  navbarPage(brand, id = "tab", windowTitle = "undepRcate",
     theme = bslib::bs_theme(version = 5, bg = "#121416", fg = "#edf0f2",
                             primary = "#80d5c0", secondary = "#30383b"),
     header = tags$head(tags$meta(name = "theme-color", content = "#121416"),
@@ -51,8 +51,8 @@ rreps_ui <- function() {
               conditionalPanel("input.source_mode === 'Positron'", uiOutput("file_info")),
               div(class = "editor-actions",
                 tags$button(id = "check_button", type = "button", class = "btn btn-primary",
-                            onclick = "RReps.submit()", "Check answer ", tags$kbd("Ctrl \u21b5")),
-                tags$button(type = "button", id = "reset_button", class = "btn btn-default", onclick = "RReps.reset()",
+                            onclick = "undepRcate.submit()", "Check answer ", tags$kbd("Ctrl \u21b5")),
+                tags$button(type = "button", id = "reset_button", class = "btn btn-default", onclick = "undepRcate.reset()",
                             title = "Reset the in-app editor (Alt+Backspace)", "Reset editor"),
                 actionButton("advance", "Next repetition \u2192", title = "Next repetition (Alt+Enter)"))),
             div(role = "status", `aria-live` = "polite", uiOutput("feedback"))),

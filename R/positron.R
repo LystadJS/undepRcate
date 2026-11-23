@@ -1,5 +1,5 @@
 practice_folder <- function(s) {
-  file.path(getOption("rreps.practice", "practice"), sprintf("session-%06d", s$id),
+  file.path(getOption("undepRcate.practice", getOption("rreps.practice", "practice")), sprintf("session-%06d", s$id),
             sprintf("rep-%03d-%s-%d", s$position, s$template_id, s$seed))
 }
 
@@ -10,16 +10,31 @@ prepare_files <- function(s, ex) {
   if (!file.exists(answer)) writeLines(s$draft, answer, useBytes = TRUE)
   if (!file.exists(file.path(path, "inputs.rds"))) saveRDS(ex$inputs, file.path(path, "inputs.rds"))
   context <- file.path(path, "context.R")
-  # Only displayed fixture objects are exported. Learner code stays in answer.R.
+  # The documented source() command runs from the project root. Relative paths
+  # keep exported exercises usable when the checkout moves.
+  data_path <- encodeString(file.path(path, "inputs.rds"), quote = '"')
+  library_line <- '.libPaths(c(".local-library", .libPaths()))'
+  input_line <- paste0("list2env(readRDS(", data_path, "), envir = .GlobalEnv)")
   if (!file.exists(context)) {
-    data_path <- encodeString(file.path(normalizePath(path, winslash = "/"), "inputs.rds"), quote = '"')
-    library_path <- encodeString(file.path(getOption("rreps.root"), ".local-library"), quote = '"')
-    writeLines(c(paste("#", strwrap(ex$instructions)),
-       paste0(".libPaths(c(", library_path, ", .libPaths()))"),
-       "library(dplyr)", "library(tidyr)", "library(purrr)", "library(ggplot2)",
-       paste0("list2env(readRDS(", data_path, "), envir = .GlobalEnv)")), context)
-  }
+    writeLines(c(paste("#", strwrap(ex$instructions)), library_line, "library(tidyverse)",
+      if (identical(ex$category, "Missing Data")) 'invisible(loadNamespace("mice"))', input_line), context)
+  } else relocate_context(context)
   answer
+}
+
+relocate_context <- function(context) {
+  # Repair only the generated paths. The learner may have added their own
+  # setup code or notes to this file, and their answer lives separately.
+  original <- readLines(context, warn = FALSE, encoding = "UTF-8")
+  updated <- original
+  old_root <- file.path(dirname(getOption("undepRcate.root")), "RReps")
+  input_file <- file.path(dirname(context), "inputs.rds")
+  old_library <- sprintf('.libPaths(c("%s/.local-library", .libPaths()))', old_root)
+  input_line <- function(path) sprintf('list2env(readRDS(%s), envir = .GlobalEnv)', encodeString(path, quote = '"'))
+  updated[original == old_library] <- '.libPaths(c(".local-library", .libPaths()))'
+  updated[original == input_line(file.path(old_root, input_file))] <- input_line(input_file)
+  if (!identical(updated, original)) writeLines(enc2utf8(updated), context, useBytes = TRUE)
+  invisible(!identical(updated, original))
 }
 
 read_practice_file <- function(s) {

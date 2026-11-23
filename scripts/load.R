@@ -1,6 +1,6 @@
 root <- normalizePath(".", winslash = "/", mustWork = TRUE)
 stopifnot(file.exists(file.path(root, "DESCRIPTION")))
-options(rreps.root = root)
+options(undepRcate.root = root)
 # scripts/setup.R restores renv.lock to this project-local library.
 if (dir.exists(".local-library")) .libPaths(c(normalizePath(".local-library"), .libPaths()))
 suppressPackageStartupMessages(library(shiny))

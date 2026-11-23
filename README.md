@@ -1,23 +1,23 @@
-# RReps
+# undepRcate
 
-RReps is a local R/Shiny trainer for practicing the same programming operation across fresh datasets. Choose a drill such as **Grouped summaries**, request 20 repetitions, and write the final R expression in the editor. Each submission runs against the displayed inputs and two hidden fixtures. Progress stays in SQLite on your computer.
+undepRcate is a local R/Shiny trainer for practicing the same programming operation across fresh datasets. Choose a drill such as **Grouped summaries**, request 20 repetitions, and write the final R expression in the editor. Each submission runs against the displayed inputs and two hidden fixtures. Progress stays in SQLite on your computer.
 
-![A grouped-summary repetition with an empty R editor, a typed dataset preview, and hint controls](docs/practice.png)
+![Missing Data practice in undepRcate with an R editor, fixture preview and hints](docs/practice.png)
 
 ## Launch on Windows
 
 Install R 4.5.3 for the tested environment. Open the repository folder in Positron or open PowerShell there. Run setup once, then launch the app.
 
 ```powershell
-git clone https://github.com/LystadJS/RReps.git
-cd RReps
+git clone https://github.com/LystadJS/undepRcate.git
+cd undepRcate
 .\scripts\start.cmd scripts/setup.R
 .\scripts\start.cmd
 ```
 
-For an existing checkout, start with the setup command. The native Windows launcher works from Command Prompt or PowerShell and locates R on PATH, through the Windows registry, or under Program Files. Setup restores the versions in `renv.lock` into `.local-library/` and can reuse installed copies of matching versions. A fresh installation needs access to CRAN. Archived source packages with compiled code require Rtools45 on Windows.
+For an existing checkout, start with the setup command. The native Windows launcher works from Command Prompt or PowerShell and locates R on PATH, through the Windows registry, or under Program Files. Setup restores the versions in `renv.lock` into `.local-library/` and can reuse installed copies of matching versions. A fresh Windows x64 installation with R 4.5 uses dated Posit package repositories and CRAN. Packages that need compilation require Rtools45 on Windows.
 
-The app opens [on localhost](http://127.0.0.1:3838). Stop it with Ctrl+C in the launch terminal. To choose another port, set `$env:RREPS_PORT = "3839"` before launch. Set `$env:RREPS_BROWSER = "0"` to suppress browser launch. On systems with Rscript on PATH, the equivalent commands are:
+The app opens [on localhost](http://127.0.0.1:3838). Stop it with Ctrl+C in the launch terminal. To choose another port, set `$env:UNDEPRCATE_PORT = "3839"` before launch. Set `$env:UNDEPRCATE_BROWSER = "0"` to suppress browser launch. On systems with Rscript on PATH, the equivalent commands are:
 
 ```sh
 Rscript --vanilla scripts/setup.R
@@ -25,10 +25,12 @@ Rscript --vanilla run.R
 Rscript --vanilla tests/testthat.R
 ```
 
+Existing RReps users can update their checkout in place. Keep the project’s `.state/` and `practice/` directories with the renamed folder to retain saved sessions and history. The launcher continues to recognize the previous port and browser environment variables.
+
 ## A first session
 
 1. Under **Practice**, select **Grouped operations → Grouped summaries**. Choose **Recall**, **20** repetitions, and **Sequential**.
-2. Read the prompt and column types. In-app answers may use base R or the attached dplyr, tidyr, purrr, and ggplot2 packages. Return the requested object as the last expression. Function-writing exercises expect the function itself.
+2. Read the prompt and column types. The tidyverse is attached. Missing Data reference solutions use tidyverse operations and the native pipe, with qualified `mice::` calls for multiple imputation. The grader checks the returned object's meaning, including exact storage when the task specifies a typed schema. Return the requested object as the last expression. Function-writing exercises expect the function itself.
 3. Press **Ctrl+Enter** to check. Expand **Test results** for the preview and hidden-fixture diagnostics. Retry the same data immediately after a miss. Hints progress from the concept to the technique, a partial example, and the explained answer.
 4. After a pass, use **Alt+Enter** for the next variation. **Alt+Backspace** clears the in-app editor. On macOS, Command+Enter also checks an answer.
 5. Advance after the final pass to finish the set. Open **Progress** for daily activity, filtered accuracy, time trends, mastery, and recent submissions. The next time a skill is due, **Review** starts five fresh recall repetitions.
@@ -42,17 +44,17 @@ The range is 5, 10, 20, 50, 100, or unlimited. A single drill stays on the same 
 | Speed | Counts down to your configurable per-repetition target. You can finish after the target expires and see the overrun alongside correctness. |
 | Mastery | Tracks a three-pass checkpoint within the session for each drill. New, unaided first passes build the streak. A miss or hint resets it. The long-term skill rating also requires later reviews. |
 
-The library contains 30 templates covering R fundamentals, filtering and selection, variable construction, grouped operations, joins, reshaping and missing values, ggplot2, and statistical programming. Descriptive summaries, distribution probabilities, simulation, linear models, and logistic prediction have executable answer contracts.
+The library has 62 drills across nine categories. **Missing Data** includes 32 drills in six stages, from finding missing or structurally inapplicable records to validating imputations, pooling model estimates, and reporting sensitivity to assumptions. Select the category and start with **Import records without losing missing codes**, or choose an individual drill directly. [Missing Data learning path and software notation](docs/MISSING-DATA.md)
 
 ## Practice in Positron
 
-Open the project folder. If Positron asks whether you trust the folder, review the checkout and trust it to enable workspace tasks. Choose **Tasks: Run Task** in the command palette. The project supplies **RReps: Restore dependencies**, **RReps: Launch**, and **RReps: Run tests**. The terminal commands above work independently of IDE task support.
+Open the project folder. If Positron asks whether you trust the folder, review the checkout and trust it to enable workspace tasks. Choose **Tasks: Run Task** in the command palette. The project supplies **undepRcate: Restore dependencies**, **undepRcate: Launch**, and **undepRcate: Run tests**. The terminal commands above work independently of IDE task support.
 
 During a repetition, switch **Workspace** to **Positron**. The app shows the following commands with the actual exercise directory filled in:
 
 - Open the repetition's `answer.R` with the displayed `positron -r` terminal command or the IDE file explorer.
 - Source the sibling `context.R` in the R console to load the displayed fixture and packages for interactive work. Keep setup and console experiments outside `answer.R`.
-- Save `answer.R` and click **Check answer** in the browser. RReps reads the saved file and uses the same subprocess and tests as the in-app editor. Unsaved IDE buffer changes are available after saving.
+- Save `answer.R` and click **Check answer** in the browser. undepRcate reads the saved file and uses the same subprocess and tests as the in-app editor. Unsaved IDE buffer changes are available after saving.
 
 Each repetition has its own folder under `practice/`. Retries and restarts reuse that folder. The active exercise, editor draft, hints, submissions, settings, and mastery history persist under `.state/`. These directories are Git-ignored. Close the app before copying both directories for a backup. Only project-local task configuration is required. Positron uses your own editor preferences.
 
@@ -80,7 +82,7 @@ Accuracy includes retries. A completed repetition is one passing variation. Solv
 The grader checks tables by their declared row order, column contract, values, types, and grouping. Function exercises call the submitted function on multiple inputs. Plot exercises inspect ggplot mappings, constructed layers, panel layouts, scales, and requested styling. Executable fixtures sample behavior and cannot establish equivalence on every possible input. Results distinguish syntax, runtime, semantic, timeout, and infrastructure failures. The default grading deadline is 15 seconds. To change it, open an R console in the project and run:
 
 ```r
-options(rreps.timeout = 30)
+options(undepRcate.timeout = 30)
 source("run.R")
 ```
 
@@ -98,4 +100,4 @@ source("run.R")
 
 Run `.\scripts\start.cmd tests/testthat.R` from PowerShell. The suite exercises real R submissions, reproducible fixtures, alternative answers, false passes, subprocess failures, scheduling, SQLite restarts, and the complete 20-repetition grouped-summary workflow. Tests use disposable data. See the [exercise authoring guide](docs/EXERCISES.md) for a complete template example.
 
-Before implementation, the [learnr exercise engine](https://github.com/rstudio/learnr/blob/main/R/exercise.R) and [gradethis grading examples](https://github.com/rstudio/gradethis/blob/main/inst/tutorials/grading-demo/grading-demo.Rmd) provided existing approaches to executable R exercises. RReps uses its own generated fixtures and scheduling rules and relies on [callr](https://github.com/r-lib/callr) for subprocess execution. Released under the [MIT license](LICENSE).
+Before implementation, the [learnr exercise engine](https://github.com/rstudio/learnr/blob/main/R/exercise.R) and [gradethis grading examples](https://github.com/rstudio/gradethis/blob/main/inst/tutorials/grading-demo/grading-demo.Rmd) provided existing approaches to executable R exercises. undepRcate uses its own generated fixtures and scheduling rules and relies on [callr](https://github.com/r-lib/callr) for subprocess execution. Released under the [MIT license](LICENSE).

@@ -3,7 +3,7 @@ testthat::test_that("the library covers every category and all templates have ru
   testthat::expect_gte(nrow(catalog), 24L)
   required <- c("R fundamentals", "Filtering and selection", "Variable construction",
                 "Grouped operations", "Joining datasets", "Reshaping and missing values",
-                "Visualization", "Statistical programming")
+                "Visualization", "Statistical programming", "Missing Data")
   testthat::expect_true(all(required %in% catalog$category))
   testthat::expect_identical(anyDuplicated(catalog$id), 0L)
   testthat::expect_true(all(vapply(split(catalog$difficulty, catalog$category)[required],
@@ -61,7 +61,7 @@ testthat::test_that("every reference passes its own checker on displayed and hid
       paste(graded$status, paste(graded$checks$detail[!graded$checks$passed], collapse = " / "))
     }, "")
     setNames(results, paste(variants$id, variants$level))
-  }, args = list(root = getOption("rreps.root")), libpath = .libPaths())
+  }, args = list(root = getOption("undepRcate.root")), libpath = .libPaths())
   testthat::expect_true(all(results == "pass"), info = paste(names(results)[results != "pass"],
                                                               results[results != "pass"]))
 })

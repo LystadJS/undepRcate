@@ -13,10 +13,10 @@ grouped_answer <- function(ex) {
 testthat::test_that("twenty real grouped submissions survive a restart and schedule a next-day review", {
   sandbox <- withr::local_tempdir()
   db <- file.path(sandbox, "progress.sqlite")
-  withr::local_options(list(rreps.db = db, rreps.practice = file.path(sandbox, "practice")))
+  withr::local_options(list(undepRcate.db = db, undepRcate.practice = file.path(sandbox, "practice")))
   checkpoint <- new.env(parent = emptyenv())
 
-  shiny::testServer(rreps_server, {
+  shiny::testServer(undepRcate_server, {
     session$flushReact()
     session$setInputs(category = "Grouped operations", skill = "grouped_summary",
                       mode = "Recall", ordering = "Sequential", target = "20")
@@ -37,7 +37,7 @@ testthat::test_that("twenty real grouped submissions survive a restart and sched
     testthat::expect_identical(current()$draft, checkpoint$first_code)
   })
 
-  shiny::testServer(rreps_server, {
+  shiny::testServer(undepRcate_server, {
     session$flushReact()
     testthat::expect_identical(rep_token(current()), checkpoint$token)
     testthat::expect_identical(item()$inputs, checkpoint$inputs)
@@ -93,7 +93,7 @@ testthat::test_that("twenty real grouped submissions survive a restart and sched
   DBI::dbExecute(con, "UPDATE attempts SET attempted_at=attempted_at+?, practice_date=?",
                  params = list(shift, as.character(yesterday)))
   db_close(con)
-  shiny::testServer(rreps_server, {
+  shiny::testServer(undepRcate_server, {
     session$flushReact()
     testthat::expect_null(current())
     testthat::expect_equal(nrow(attempt_history(con)), 21L)

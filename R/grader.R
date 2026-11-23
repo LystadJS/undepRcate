@@ -5,9 +5,9 @@ assessment_failure <- function(status, detail) {
        warnings = character(), output = character(), elapsed = 0)
 }
 
-assess_answer <- function(exercise, code, timeout = getOption("rreps.timeout", 15)) {
+assess_answer <- function(exercise, code, timeout = getOption("undepRcate.timeout", getOption("rreps.timeout", 15))) {
   started <- proc.time()[["elapsed"]]
-  scratch <- tempfile("rreps-grade-")
+  scratch <- tempfile("undepRcate-grade-")
   if (!dir.create(scratch)) return(assessment_failure("infrastructure_error", "Cannot create working directory."))
   on.exit(unlink(scratch, recursive = TRUE), add = TRUE)
   console <- file.path(scratch, "console.log")
@@ -16,7 +16,7 @@ assess_answer <- function(exercise, code, timeout = getOption("rreps.timeout", 1
   review <- tryCatch({
     stopifnot(is.character(code), length(code) == 1L, !is.na(code),
               is.numeric(timeout), length(timeout) == 1L, is.finite(timeout), timeout > 0)
-    worker <- normalizePath(file.path(getOption("rreps.root", "."), "R", "worker.R"), mustWork = TRUE)
+    worker <- normalizePath(file.path(getOption("undepRcate.root", "."), "R", "worker.R"), mustWork = TRUE)
     result <- callr::r(function(worker, specification, submission, message_path) {
       # Start capturing after R initializes so locale/startup notices stay out of feedback.
       stream <- file(message_path, open = "wt")
@@ -25,7 +25,7 @@ assess_answer <- function(exercise, code, timeout = getOption("rreps.timeout", 1
       engine <- new.env(parent = globalenv())
       sys.source(worker, envir = engine)
       engine$grade_submission(specification, submission)
-    }, args = list(worker, exercise[c("solution", "fixtures", "contract", "seed")], code, messages),
+    }, args = list(worker, exercise[c("category", "solution", "fixtures", "contract", "seed")], code, messages),
     wd = scratch, timeout = timeout, spinner = FALSE, stdout = console,
     libpath = .libPaths(), system_profile = FALSE, user_profile = FALSE)
 

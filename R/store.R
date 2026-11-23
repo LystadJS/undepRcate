@@ -10,7 +10,7 @@ db_open <- function(path) {
   DBI::dbGetQuery(con, "PRAGMA journal_mode = WAL")
   DBI::dbWithTransaction(con, {
     version <- DBI::dbGetQuery(con, "PRAGMA user_version")[[1L]]
-    if (version > 2L) stop("This progress database needs a newer version of RReps.")
+    if (version > 2L) stop("This progress database needs a newer version of undepRcate.")
     if (version == 0L) {
       DBI::dbExecute(con, "CREATE TABLE sessions (
         id INTEGER PRIMARY KEY, focus TEXT NOT NULL, mode TEXT NOT NULL,
