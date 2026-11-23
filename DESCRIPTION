@@ -1,12 +1,12 @@
-Package: RReps
+Package: undepRcate
 Type: Project
 Title: Local R Fluency Practice
-Version: 0.1.0
-Author: RReps contributors
+Version: 0.2.0
+Author: undepRcate contributors
 Description: A single-user Shiny practice environment with reproducible R drills,
     isolated answer assessment, and local review scheduling.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.3.0)
 Imports: shiny, shinyAce, bslib, dplyr, tidyr, purrr, ggplot2, DBI, RSQLite,
-    callr, processx, testthat, renv, withr, jsonlite
+    callr, processx, testthat, renv, withr, jsonlite, tidyverse, mice

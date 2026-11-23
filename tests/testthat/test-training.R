@@ -21,15 +21,15 @@ testthat::test_that("a mixed sequence stays in category and unlocks its difficul
 })
 
 testthat::test_that("editor preferences are local and restored", {
-  withr::local_options(list(rreps.db = tempfile(fileext = ".sqlite")))
-  shiny::testServer(rreps_server, {
+  withr::local_options(list(undepRcate.db = tempfile(fileext = ".sqlite")))
+  shiny::testServer(undepRcate_server, {
     session$flushReact()
     session$setInputs(daily_goal = 12, speed_goal = 45, show_timer = FALSE,
                       accent = "blue", disable_suggestions = FALSE, save_prefs = 1)
     testthat::expect_identical(get_setting(con, "disable_suggestions"), "no")
     testthat::expect_identical(get_setting(con, "daily_goal"), "12")
   })
-  shiny::testServer(rreps_server, {
+  shiny::testServer(undepRcate_server, {
     session$flushReact()
     testthat::expect_identical(pref("accent", "mint"), "blue")
     testthat::expect_identical(pref("disable_suggestions", "yes"), "no")

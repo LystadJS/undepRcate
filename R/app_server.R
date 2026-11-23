@@ -1,5 +1,5 @@
-rreps_server <- function(input, output, session) {
-  con <- db_open(getOption("rreps.db", ".state/progress.sqlite"))
+undepRcate_server <- function(input, output, session) {
+  con <- db_open(getOption("undepRcate.db", getOption("rreps.db", ".state/progress.sqlite")))
   session$onSessionEnded(function() db_close(con))
   catalog <- exercise_catalog()
   current <- reactiveVal(active_session(con))
@@ -48,9 +48,8 @@ rreps_server <- function(input, output, session) {
   output$mode_note <- renderText(mode_notes[[req(input$mode)]])
   observeEvent(input$category, {
     pool <- catalog[catalog$category == input$category, ]
-    pool <- pool[order(pool$difficulty, pool$title), ]
-    choices <- c(setNames(pool$id, pool$title), "Mixed drills in this category" = paste0("category/", input$category))
-    updateSelectInput(session, "skill", choices = choices,
+    pool <- ordered_drills(pool)
+    updateSelectInput(session, "skill", choices = drill_choices(pool, input$category),
                       selected = if ("grouped_summary" %in% pool$id) "grouped_summary" else pool$id[1L])
   })
 

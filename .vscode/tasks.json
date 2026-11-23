@@ -3,7 +3,7 @@
   "options": { "cwd": "${workspaceFolder}" },
   "tasks": [
     {
-      "label": "RReps: Launch",
+      "label": "undepRcate: Launch",
       "type": "process",
       "command": "Rscript",
       "args": ["--vanilla", "run.R"],
@@ -14,7 +14,7 @@
       "problemMatcher": []
     },
     {
-      "label": "RReps: Restore dependencies",
+      "label": "undepRcate: Restore dependencies",
       "type": "process",
       "command": "Rscript",
       "args": ["--vanilla", "scripts/setup.R"],
@@ -25,7 +25,7 @@
       "problemMatcher": []
     },
     {
-      "label": "RReps: Run tests",
+      "label": "undepRcate: Run tests",
       "type": "process",
       "command": "Rscript",
       "args": ["--vanilla", "tests/testthat.R"],

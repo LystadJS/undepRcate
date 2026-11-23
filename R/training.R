@@ -11,7 +11,7 @@ next_drill <- function(focus, catalog, progress, ordering, position, seed) {
   successes <- sum(progress$unseen_successes[progress$template_id %in% pool$id])
   available <- min(3L, 1L + as.integer(successes >= 3L) + as.integer(successes >= 8L))
   pool <- pool[pool$difficulty <= max(min(pool$difficulty), available), ]
-  pool <- pool[order(pool$difficulty, pool$title), ]
+  pool <- ordered_drills(pool)
   if (ordering == "Randomized") return(withr::with_seed(seed, sample(pool$id, 1L)))
   pool$id[1L + (position - 1L) %% nrow(pool)]
 }
@@ -27,6 +27,11 @@ rep_token <- function(s) {
 }
 
 preview_input <- function(value, name) {
+  if (inherits(value, "mids")) {
+    return(div(class = "fixture", h3(code(name), tags$small("mice mids object")),
+      p(sprintf("%d imputations, %d completed iterations. The table shows the original incomplete data.",
+                value$m, value$iteration)), preview_input(value$data, paste0(name, "$data"))))
+  }
   if (is.data.frame(value)) {
     types <- vapply(value, function(column) paste(class(column), collapse = "/"), "")
     rows <- utils::head(value, 5L)
@@ -34,7 +39,14 @@ preview_input <- function(value, name) {
       div(class = "table-scroll", tabindex = 0, tags$table(
         tags$thead(tags$tr(lapply(names(value), function(col) tags$th(col, tags$small(types[[col]]))))),
         tags$tbody(lapply(seq_len(nrow(rows)), function(i)
-          tags$tr(lapply(rows, function(x) tags$td(as.character(x[i]))))))))))
+          tags$tr(lapply(rows, function(x) {
+            cell <- x[i]
+            label <- as.character(cell)
+            if (is.double(cell) && !is.object(cell) && is.finite(cell) && cell != trunc(cell)) {
+              label <- format(signif(cell, 5L), trim = TRUE)
+            }
+            tags$td(title = as.character(cell), label)
+          }))))))))
   }
   div(class = "fixture", h3(code(name), tags$small(paste(class(value)[1L], "\u00b7 length", length(value)))),
       pre(paste(capture.output(print(utils::head(value, 12L))), collapse = "\n")))

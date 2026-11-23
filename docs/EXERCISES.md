@@ -48,7 +48,7 @@ The last expression in the submission supplies its answer. Assignments also retu
 | Contract | What the worker checks |
 | --- | --- |
 | `list(kind = "value")` | The resulting R value, type, dimensions and names. Ordinary integer and double representations of the same numbers are accepted. |
-| `exercise_table()` | Dimensions, column names and types, grouping, and all cell values including missing values. A data frame and a tibble can agree. Pass `ordered = TRUE` for required row order and `column_order = TRUE` for required column order. Use ordinary sortable columns for unordered comparisons. |
+| `exercise_table()` | Dimensions, column names and types, grouping, and all cell values including missing values. A data frame and a tibble can agree. Pass `ordered = TRUE` for required row order and `column_order = TRUE` for required column order. If a schema requires exact storage, declare it with e.g. `storage = c(visit = "integer")`. Use ordinary sortable columns for unordered comparisons. |
 | `list(kind = "function", cases = list(list(0), list(NA_real_)))` | The result must be a function. The worker calls it and the reference on each argument list and compares their results. Supply at least two cases. Include boundary cases and use positional arguments when the prompt leaves argument names open. |
 | `list(kind = "plot")` | Evaluated aesthetic mappings, geom, stat, position, built structural data, panel layout, coordinates, and trained axis and aesthetic scales. Add `default_style = TRUE` to check built layer styling, `theme = TRUE` to check the requested theme or `labels = c("title", "x")` to check specific labels. |
 
@@ -66,4 +66,4 @@ assess_answer(exercise, "trimws(labels)")$status
 assess_answer(exercise, "labels")$checks
 ```
 
-The first submission should pass. The second leaves whitespace in place. Check an independent correct implementation and a plausible wrong one across several seeds. Run the complete test suite with `Rscript --vanilla tests/testthat.R` or the **RReps: Run tests** project task.
+The first submission should pass. The second leaves whitespace in place. Check an independent correct implementation and a plausible wrong one across several seeds. Run the complete test suite with `Rscript --vanilla tests/testthat.R` or the **undepRcate: Run tests** project task.

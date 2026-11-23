@@ -17,7 +17,7 @@
   function saveDraft() {
     if (token && !passed && source() === "In-app") send("draft_event", {token, code: editor().getValue()});
   }
-  window.RReps = {
+  window.undepRcate = {
     submit() {
       if (!token || passed) return;
       clearTimeout(timer);
@@ -68,11 +68,11 @@
       if (!token || !document.querySelector(".active-shell")?.offsetWidth ||
           document.querySelector(".modal.show")) return;
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        e.preventDefault(); e.stopPropagation(); RReps.submit();
+        e.preventDefault(); e.stopPropagation(); undepRcate.submit();
       } else if (e.altKey && e.key === "Enter") {
         e.preventDefault(); document.getElementById("advance").click();
       } else if (e.altKey && e.key === "Backspace") {
-        e.preventDefault(); RReps.reset();
+        e.preventDefault(); undepRcate.reset();
       }
     }, true);
     function tick() {

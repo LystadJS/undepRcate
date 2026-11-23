@@ -31,6 +31,12 @@ table_groups <- function(x) {
 
 grade_table <- function(actual, expected, contract) {
   stopifnot(is.data.frame(expected), !anyDuplicated(names(expected)))
+  storage <- contract$storage
+  if (!is.null(storage)) {
+    stopifnot(is.character(storage), length(storage) > 0L, !is.null(names(storage)),
+              all(nzchar(names(storage))), !anyDuplicated(names(storage)), all(names(storage) %in% names(expected)),
+              identical(vapply(expected[names(storage)], typeof, ""), storage))
+  }
   checks <- check_result("Data frame", is.data.frame(actual), "Return a data frame or tibble.")
   if (!all(checks$passed)) return(checks)
   same_columns <- if (isTRUE(contract$column_order)) identical(names(actual), names(expected)) else
@@ -45,6 +51,12 @@ grade_table <- function(actual, expected, contract) {
     check_result("Grouping", same_value(table_groups(actual), table_groups(expected)),
                  "Check the grouping of the returned data frame."))
   if (!same_columns) return(checks)
+  if (!is.null(storage)) {
+    actual_types <- vapply(actual[names(storage)], typeof, "")
+    wrong <- names(storage)[actual_types != storage]
+    checks <- rbind(checks, check_result("Declared storage types", !length(wrong),
+      paste(sprintf("%s requires %s, received %s.", wrong, storage[wrong], actual_types[wrong]), collapse = " ")))
+  }
   actual <- as.data.frame(actual)[names(expected)]
   expected <- as.data.frame(expected)
   types <- vapply(actual, column_kind, "") == vapply(expected, column_kind, "")
@@ -174,17 +186,15 @@ grade_plot <- function(actual, expected, contract, run_student) {
 }
 
 grade_submission <- function(spec, submission) {
-  suppressPackageStartupMessages({
-    library(dplyr)
-    library(tidyr)
-    library(purrr)
-    library(ggplot2)
-  })
+  suppressPackageStartupMessages(library(tidyverse))
+  # Register with.mids before evaluating models on a serialized imputation.
+  # Namespaced use leaves tidyr::complete() available under its usual name.
+  if (identical(spec$category, "Missing Data")) loadNamespace("mice")
   stopifnot(is.character(spec$solution), length(spec$solution) == 1L,
             is.list(spec$fixtures), length(spec$fixtures) >= 2L, is.list(spec$contract))
   kind <- spec$contract$kind
   stopifnot(length(kind) == 1L, kind %in% c("value", "table", "function", "plot"))
-  fields <- switch(kind, value = NULL, table = c("ordered", "column_order"),
+  fields <- switch(kind, value = NULL, table = c("ordered", "column_order", "storage"),
                    `function` = "cases", plot = c("default_style", "theme", "labels"))
   stopifnot(!anyDuplicated(names(spec$contract)), all(names(spec$contract) %in% c("kind", fields)))
   for (flag in intersect(c("ordered", "column_order", "default_style", "theme"), names(spec$contract))) {

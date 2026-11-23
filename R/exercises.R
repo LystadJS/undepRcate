@@ -60,8 +60,10 @@ exercise_plan <- function(instructions, solution, concept, technique, partial,
   )
 }
 
-exercise_table <- function(ordered = FALSE, column_order = FALSE) {
-  list(kind = "table", ordered = ordered, column_order = column_order)
+exercise_table <- function(ordered = FALSE, column_order = FALSE, storage = NULL) {
+  contract <- list(kind = "table", ordered = ordered, column_order = column_order)
+  if (!is.null(storage)) contract$storage <- storage
+  contract
 }
 
 make_exercise <- function(id, seed, level = 1L) {
@@ -78,7 +80,8 @@ make_exercise <- function(id, seed, level = 1L) {
     ctx <- exercise_context()
     spec <- template$build(ctx, level)
     fixtures <- lapply(seq_len(3L), function(i) spec$fixture(ctx, i))
-    c(list(id = id, seed = seed, level = level, inputs = fixtures[[1L]], fixtures = fixtures),
+    c(list(id = id, category = template$category, seed = seed, level = level,
+           inputs = fixtures[[1L]], fixtures = fixtures),
       spec[c("instructions", "solution", "hints", "explanation", "contract")])
   })
 }
